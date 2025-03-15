@@ -32,7 +32,7 @@ def upload_audio():
                 files={"file": f},
                 data={"model": "whisper-1"}
             ).json()
-        
+        print(whisper_response)
         user_text = whisper_response.get("text", "").strip()
         if not user_text:
             return Response("לא זוהה דיבור, נסה שוב.", mimetype="text/plain; charset=utf-8")
