@@ -1,22 +1,28 @@
 from flask import Flask, request, Response
 import requests
 import os
-import openai
 
 app = Flask(__name__)
 
 OPENROUTER_API_KEY = os.getenv("OPENROUTER_API_KEY")
 OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")  # לשימוש ב-Whisper
 
-@app.route('/api/upload', methods=['POST'])
+@app.route('/api/upload', methods=['GET'])
 def upload_audio():
     try:
-        if 'file' not in request.files:
-            return Response("שגיאה: לא התקבל קובץ", mimetype="text/plain; charset=utf-8", status=400)
-        
-        audio_file = request.files['file']
+        # קבלת הקישור להקלטה מימות המשיח
+        record_url = request.args.get('record_link', '').strip()
+        if not record_url:
+            return Response("שגיאה: לא התקבל קישור להקלטה", mimetype="text/plain; charset=utf-8", status=400)
+
+        # הורדת קובץ ההקלטה מהשרת של ימות המשיח
+        audio_response = requests.get(record_url)
+        if audio_response.status_code != 200:
+            return Response("שגיאה בהורדת קובץ ההקלטה", mimetype="text/plain; charset=utf-8", status=400)
+
         audio_path = "/tmp/input_audio.wav"
-        audio_file.save(audio_path)
+        with open(audio_path, "wb") as f:
+            f.write(audio_response.content)
 
         # שימוש ב-Whisper להמרת קול לטקסט
         with open(audio_path, "rb") as f:
